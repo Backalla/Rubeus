@@ -1,6 +1,9 @@
-from django.http import HttpResponse
+from django.shortcuts import render
+from django.template import loader
+
 
 def index(request):
-	return HttpResponse("Nigga I can see ya'll")
+  context = {'message': 'Ma nigga ma nigga..'}
+  return render(request,'testing/index.html',context)
 
 # Create your views here.
