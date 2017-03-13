@@ -1,0 +1,38 @@
+{% extends 'home/base.html' %}
+{% block title %}Auction | Fantasy IPL{% endblock %}
+
+
+{% block body %}
+    <h2>This is Auction page</h2>
+    {% for team_name,players_list in teams.iteritems %}
+        <div class="panel panel-default">
+            <div class="panel-heading"><strong>{{ team_name }}</strong></div>
+            <div class="panel-body">
+    {#        <h4>{{ players_list }}</h4>#}
+                {% if players_list|length == 0 %}
+                    <h4>No players in the team yet. Buy players to add to the team.</h4>
+                {% else %}
+                    <table class="table table-hover">
+                        <tr>
+                            <th>#</th>
+                            <th>Player Name</th>
+                            <th>Player Type</th>
+                            <th>Base Value</th>
+                            <th>Indian/Foreigner</th>
+                        </tr>
+                    {% for player in players_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ player.name }}</td>
+                            <td>{{ player.player_type }}</td>
+                            <td>{{ player.basevalue }}</td>
+                            <td>{{ player.nationality }}</td>
+                        </tr>
+                    {% endfor %}
+                    </table>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+
+{% endblock %}
