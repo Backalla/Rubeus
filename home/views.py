@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.template import loader
+import random
 from .models import Player,Owner
 
 def index(request):
@@ -16,45 +17,75 @@ def matches(request):
   return render(request,'home/matches.html',context)
 
 def auction(request):
+  prev = None
+  current = None
+  show_unsold = False
+  selected_player_type = 'BA'
+  error = ""
+  if request.method == "POST":
+    print request.POST
+    if 'current_pid' in request.POST:
+      prev = request.POST['current_pid']
+    if request.POST['action'] == 'next':
+      selected_player_type = request.POST['player_type']
+      if 'sold_to_team_name' in request.POST:
+        if request.POST['sold_to_team_name']=='UNS':
+          current_pid = request.POST['current_pid']
+          current_player_object = Player.objects.get(Pid=current_pid)
+          current_player_object.Basevalue = current_player_object.Basevalue*2
+          current_player_object.Team_name = 'UNS'
+          current_player_object.save()
+        elif request.POST['sold_to_team_name']!='UNS' and request.POST['sold_amount']:
 
+          current_pid = request.POST['current_pid']
+          sold_to_team_name = request.POST['sold_to_team_name']
+          current_player_object = Player.objects.get(Pid=current_pid)
+          sold_to_team_object = Owner.objects.get(Team_name=sold_to_team_name)
+          if sold_to_team_object.Remaining_cash >= int(request.POST['sold_amount']):
+            current_player_object.Team_name = sold_to_team_name
+            current_player_object.Basevalue = int(request.POST['sold_amount'])
+            current_player_object.save()
+            sold_to_team_object.Remaining_cash = sold_to_team_object.Remaining_cash - int(request.POST['sold_amount'])
+            sold_to_team_object.save()
+          else:
+            error = "You cannot buy this player. Insufficient funds remaining."
+        elif request.POST['sold_to_team_name'] != 'NUL' and not request.POST['sold_amount']:
+          error = "Please enter sold amount."
+      if 'show_unsold' in request.POST:
+        show_unsold = True
+        available_players = Player.objects.filter(Player_type=selected_player_type, Team_name='UNS')
+      else:
+        available_players = Player.objects.filter(Player_type=selected_player_type, Team_name='NUL')
+      if len(available_players) == 0:
+        error = "No players left!!"
+        current = '0'
+      else:
+        current = random.choice(list(available_players)).Pid
+      if error:
+        print error
+        current = request.POST['current_pid']
+    elif request.POST['action'] == 'search':
+      search_term = request.POST['search_player']
+      search_player_object = Player.objects.filter(Name=search_term)
+      if len(search_player_object) == 0:
+        error = "Player not found. Please check the name and search again."
+      else:
+        current = Player.objects.get(Name=search_term).Pid
+    elif request.POST['action'] == "previous" and not error:
+      current = request.POST['previous_pid']
+      current_player_object = Player.objects.get(Pid=current)
+      current_player_object.Basevalue /= 2
+      current_player_object.save()
+      prev = None
   all_owners = Owner.objects.all()
   all_players = Player.objects.all()
-  teams = {}
-  # Put all sold players in teams
-  team_names = {
-    'SRH': 'Sunrisers Hyderabad',
-    'RCB': 'Royal Challengers Bangalore',
-    'RPS': 'Rising Pune Supergiants',
-    'MIN': 'Mumbai Indians',
-    'KKR': 'Kolkata Knight Riders',
-    'KXP': 'Kings XI Punjab',
-    'GJL': 'Gujarat Lions',
-    'DDD': 'Delhi Daredevils'
-  }
-  for owner in all_owners:
-    teams[team_names[owner.Team_name]] = []
-  for player in all_players:
-    if player.Team_name in team_names:
-      player_info = {}
-      player_info['name'] = str(player.Name)
-      player_info['team_name'] = str(player.Team_name)
-      player_info['basevalue'] = str(player.Basevalue)
-      if str(player.Nationality) == 'IN':
-        player_info['nationality'] = "Indian"
-      else:
-        player_info['nationality'] = "Foreigner"
-      if str(player.Player_type) == 'BA':
-        player_info['player_type'] = "Batsman"
-      elif str(player.Player_type) == 'BO':
-        player_info['player_type'] = "Bowler"
-      elif str(player.Player_type) == 'WK':
-        player_info['player_type'] = "Wicket Keeper"
-      elif str(player.Player_type) == 'AR':
-        player_info['player_type'] = "All Rounder"
-      teams[team_names[player.Team_name]].append(player_info)
-  print teams
   context = {
-    'teams': teams,
-
+    "all_owners": all_owners,
+    "all_players": all_players,
+    "current":current,
+    "prev": prev,
+    "selected_player_type":selected_player_type,
+    "error":error,
+    "show_unsold":show_unsold,
   }
   return render(request,'home/auction.html',context)

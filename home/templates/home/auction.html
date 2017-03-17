@@ -3,36 +3,93 @@
 
 
 {% block body %}
-    <h2>This is Auction page</h2>
-    {% for team_name,players_list in teams.iteritems %}
-        <div class="panel panel-default">
-            <div class="panel-heading"><strong>{{ team_name }}</strong></div>
-            <div class="panel-body">
-    {#        <h4>{{ players_list }}</h4>#}
-                {% if players_list|length == 0 %}
-                    <h4>No players in the team yet. Buy players to add to the team.</h4>
-                {% else %}
-                    <table class="table table-hover">
-                        <tr>
-                            <th>#</th>
-                            <th>Player Name</th>
-                            <th>Player Type</th>
-                            <th>Base Value</th>
-                            <th>Indian/Foreigner</th>
-                        </tr>
-                    {% for player in players_list %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>{{ player.name }}</td>
-                            <td>{{ player.player_type }}</td>
-                            <td>{{ player.basevalue }}</td>
-                            <td>{{ player.nationality }}</td>
-                        </tr>
+    <h2>IPL 2017 Auctions</h2>
+    {% if error %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <strong>Error!</strong> {{ error }}
+        </div>
+    {% endif %}
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <form class="form-inline" action="" method="post">{% csrf_token %}
+            {% if current == '0' %}
+                <h3>No more players of selected category left to be sold. Please select a new category.</h3>
+            {% else %}
+                {% load staticfiles %}
+                <div class="row">
+                    {% for player in all_players %}
+                        {% if player.Pid == current %}
+                            <div class="col-xs-6"> <img src="{% static 'images/dp/'|add:player.Pid|add:'.jpg' %}" width="300px" height="300px"></div>
+                            <div class="col-xs-6">
+                                <h2><strong>{{ player.Name }}</strong></h2>
+                                <h4><strong>Player Type : </strong>{{ player.Player_type }}</h4>
+                                <h4><strong>Base Value : </strong>{{ player.Basevalue }}</h4>
+                                <h4><strong>Pid : </strong>{{ player.Pid }}</h4>
+                                Team Name : <select name="sold_to_team_name" class="form-control">
+                                    <option value='UNS'>Unsold</option>
+                                    {% for owner in all_owners %}
+                                        <option value='{{ owner.Team_name }}'>{{ owner.Name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <br><br>
+                                <input type="hidden" name="current_pid" value="{{ player.Pid }}">
+                                <input type="hidden" name="previous_pid" value="{{ prev }}">
+                                Sold Amount :
+                                <div class="input-group">
+                                    <div class="input-group-addon">₹</div>
+                                    <input type="number" name="sold_amount" class="form-control">
+                                </div><br><br>
+                                Search Player : <input type="text" name="search_player" class="form-control">
+                                <button type="submit" name="action" value="search" class="btn btn-default">Search</button>
+                            </div>
+                        {% endif %}
                     {% endfor %}
-                    </table>
-                {% endif %}
+                </div>
+            {% endif %}
+        <br><br>
+                <button class="btn btn-default" name="action" value="previous" type="submit" {% if not prev %}disabled="disabled"{% endif %}>Previous</button>
+                <select name="player_type" class="form-control">
+                    <option value='BA' {% if selected_player_type == "BA" %}selected="selected"{% endif %}>Batsman</option>
+                    <option value='BO' {% if selected_player_type == 'BO' %}selected="selected"{% endif %}>Bowler</option>
+                    <option value='AR' {% if selected_player_type == 'AR' %}selected="selected"{% endif %}>All Rounder</option>
+                    <option value='WK' {% if selected_player_type == 'WK' %}selected="selected"{% endif %}>Wicket Keeper</option>
+                </select>
+                <button class="btn btn-success" name="action" value="next" type="submit">Next Random</button>
+                <input type="checkbox" name="show_unsold" {% if show_unsold %}checked{% endif %}> Show Unsold Players.
+            </form>
+        </div>
+    </div>
+    {% for owner in all_owners %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4><strong>{{ owner.Name }}</strong> - {{ owner.Team_name }} | Remaining Cash : ₹ {{ owner.Remaining_cash }} </h4>
+            </div>
+            <div class="panel-body" style="overflow-y: scroll; max-height: 450px">
+                <table class="table table-hover">
+                    <tr>
+                        <th>Player Name</th>
+                        <th>Player Type</th>
+                        <th>Sold Value</th>
+                        <th>Indian/Foreigner</th>
+                    </tr>
+                {% with 0 as count %}
+                    {% for player in all_players %}
+                        {% if player.Team_name == owner.Team_name %}
+                        <tr>
+                            <td>{{ player.Name }}</td>
+                            <td>{{ player.Player_type }}</td>
+                            <td>{{ player.Basevalue }}</td>
+                            <td>{{ player.Nationality }}</td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+                </table>
+
             </div>
         </div>
     {% endfor %}
+
 
 {% endblock %}
