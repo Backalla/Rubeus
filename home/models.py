@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 
 from django.db import models
 
+
+
 class Player(models.Model):
   Pid = models.CharField(max_length=10,primary_key=True)
   Name = models.CharField(max_length=100)
@@ -19,6 +21,9 @@ class Player(models.Model):
   )
   Nationality = models.CharField(max_length=2,choices=NATIONALITY_CHOICES,default='IN')
   Team_name = models.CharField(max_length=3,default="NUL")
+  Is_playing = models.BooleanField(default=False)
+  Is_captain = models.BooleanField(default=False)
+  Points = models.PositiveIntegerField(default=0)
 
   def __str__(self):
     return self.Name

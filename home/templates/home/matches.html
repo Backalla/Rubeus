@@ -3,5 +3,93 @@
 
 
 {% block body %}
-    <h2>This is matches</h2>
+    {% if error %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <strong>Error!</strong> {{ error }}
+        </div>
+    {% endif %}
+    <form class="form-inline" action="" method="post">{% csrf_token %}
+        Add a new match <input type="url" name="url" class="form-control">
+        <button class="btn btn-default" type="submit" name="add_match" value="True">Add match</button>
+    </form>
+    <br><br>
+    {% for match in matches.match %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <strong>{{ match.match_name }}</strong>
+                <div class="pull-right">
+                    {% if match.team1_score > match.team2_score %}
+                        {{ match.team1_name }} won
+                    {% endif %}
+                    {% if match.team1_score < match.team2_score %}
+                        {{ match.team2_name }} won
+                    {% endif %}
+                </div>
+            </div>
+            <div class="panel-body">
+                <table class="table table-hover">
+                <tr>
+                    <th>#</th>
+                    <th>Pid</th>
+                    <th>Name</th>
+                    <th>Team</th>
+                    <th>Out By</th>
+                    <th>Runs Scored</th>
+                    <th>Fours</th>
+                    <th>Sixes</th>
+                    <th>Overs</th>
+                    <th>Runs Given</th>
+                    <th>Maiden</th>
+                    <th>Wickets</th>
+                    <th>Catch/Stumping/Run Out</th>
+                    <th>Others</th>
+                    <th><strong>Points</strong></th>
+                </tr>
+                {% for player,values in match.players.items %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ player }}</td>
+                        <td>{% for p in all_players %}
+                            {% if p.Pid == player %}
+                                {{ p.Name }}
+                            {% endif %}
+                        {% endfor %}
+                        </td>
+                        <td>{% for p in all_players %}
+                            {% if p.Pid == values.pid %}
+                                {% for owner in all_owners %}
+                                    {% if p.Team_name == owner.Team_name %}
+                                        {{ owner.Name }}
+                                    {% endif %}
+                                {% endfor %}
+
+                            {% endif %}
+                        {% endfor %}
+                        </td>
+                        <td>{{ values.out_by }}</td>
+                        <td>{{ values.runs_scored }}</td>
+                        <td>{{ values.fours }}</td>
+                        <td>{{ values.sixes }}</td>
+                        <td>{{ values.overs }}</td>
+                        <td>{{ values.runs_given }}</td>
+                        <td>{{ values.maiden }}</td>
+                        <td>{{ values.wickets }}</td>
+                        <td>{{ values.CROST }}</td>
+                        <td>{{ values.extras }}</td>
+                        <td><strong>{{ values.points }}</strong></td>
+                    </tr>
+                {% endfor %}
+                </table>
+
+            </div>
+        </div>
+        <br><br>
+
+    {% endfor %}
+    <form class="form-inline" action="" method="post">{% csrf_token %}
+        <button class="btn btn-success" type="submit" name="update_points" value="True">Update Points</button>
+    </form>
+
+
 {% endblock %}
