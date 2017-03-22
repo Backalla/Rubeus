@@ -60,36 +60,40 @@
             </form>
         </div>
     </div>
-    {% for owner in all_owners %}
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h4><strong>{{ owner.Name }}</strong> - {{ owner.Team_name }} | Remaining Cash : ₹ {{ owner.Remaining_cash }} </h4>
+    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+        {% for owner in all_owners %}
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="heading{{ forloop.counter }}">
+                    <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
+                        <h4><strong>{{ owner.Name }}</strong> - {{ owner.Team_name }} | Remaining Cash : ₹ {{ owner.Remaining_cash }} </h4>
+                    </a>
+                </div>
+                <div id="collapse{{ forloop.counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ forloop.counter }}">
+                    <div class="panel-body" style="overflow-y: scroll; max-height: 450px">
+                        <table class="table table-hover">
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Player Type</th>
+                                <th>Sold Value</th>
+                                <th>Indian/Foreigner</th>
+                            </tr>
+                        {% with 0 as count %}
+                            {% for player in all_players %}
+                                {% if player.Team_name == owner.Team_name %}
+                                <tr>
+                                    <td>{{ player.Name }}</td>
+                                    <td>{{ player.Player_type }}</td>
+                                    <td>{{ player.Basevalue }}</td>
+                                    <td>{{ player.Nationality }}</td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% endwith %}
+                        </table>
+
+                    </div>
+                </div>
             </div>
-            <div class="panel-body" style="overflow-y: scroll; max-height: 450px">
-                <table class="table table-hover">
-                    <tr>
-                        <th>Player Name</th>
-                        <th>Player Type</th>
-                        <th>Sold Value</th>
-                        <th>Indian/Foreigner</th>
-                    </tr>
-                {% with 0 as count %}
-                    {% for player in all_players %}
-                        {% if player.Team_name == owner.Team_name %}
-                        <tr>
-                            <td>{{ player.Name }}</td>
-                            <td>{{ player.Player_type }}</td>
-                            <td>{{ player.Basevalue }}</td>
-                            <td>{{ player.Nationality }}</td>
-                        </tr>
-                        {% endif %}
-                    {% endfor %}
-                {% endwith %}
-                </table>
-
-            </div>
-        </div>
-    {% endfor %}
-
-
+        {% endfor %}
+    </div>
 {% endblock %}
