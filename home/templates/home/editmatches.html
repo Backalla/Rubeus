@@ -1,0 +1,94 @@
+{% extends 'home/base.html' %}
+{% block title %}Edit Matches | Fantasy IPL{% endblock %}
+
+
+{% block body %}
+    {% if error %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <strong>Error!</strong> {{ error }}
+        </div>
+    {% endif %}
+    <h4><a href="http://www1.cricbuzz.com/cricket-series/2430/indian-premier-league-2016/matches">IPL 2016 matches.</a> </h4>
+    <form class="form-inline" action="" method="post">{% csrf_token %}
+        Add a new match <input type="url" name="url" class="form-control">
+        <button class="btn btn-default" type="submit" name="add_match" value="True">Add match</button>
+    </form>
+    <br><br>
+    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+    {% for match in matches.match %}
+        <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="heading{{ forloop.counter }}">
+                <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
+                    <strong>{{ match.match_name }}</strong>
+                </a>
+
+                <div class="pull-right">
+                    {% if match.team1_score > match.team2_score %}
+                        {{ match.team1_name }} won
+                    {% endif %}
+                    {% if match.team1_score < match.team2_score %}
+                        {{ match.team2_name }} won
+                    {% endif %}
+                </div>
+            </div>
+            <div id="collapse{{ forloop.counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ forloop.counter }}">
+                <div class="panel-body">
+                    <form class="form-inline" action="" method="post">{% csrf_token %}
+                        <table class="table table-hover">
+                            <tr>
+                                <th>#</th>
+                                <th>Pid</th>
+                                <th>Name</th>
+                                <th>Team</th>
+                                <th>Runs Scored</th>
+                                <th>Overs</th>
+                                <th>Runs Given</th>
+                                <th>Maiden</th>
+                                <th>Wickets</th>
+                                <th>Catch/Stumping/Run Out</th>
+                                <th>Others</th>
+                                <th><strong>Points</strong></th>
+                            </tr>
+                            {% for player,values in match.players.items %}
+                                {% for p in  all_players %}
+                                    {% if p.Pid == player %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ player }}</td>
+                                            <td>{{ p.Name }}</td>
+                                            <td>{% for owner in all_owners %}
+                                                        {% if p.Team_name == owner.Team_name %}
+                                                            {{ owner.Name }}
+                                                        {% endif %}
+                                                {% endfor %}
+                                            </td>
+                                            <td><input style="width: 50px" class="form-control" type="text" name= "{{ player }}__runs_scored" value="{{ values.runs_scored }}"></td>
+                                            <td><input style="width: 50px" class="form-control" type="text" name= "{{ player }}__overs" value="{{ values.overs }}"</td>
+                                            <td><input style="width: 50px" class="form-control" type="text" name= "{{ player }}__runs_given" value="{{ values.runs_given }}"</td>
+                                            <td><input style="width: 50px" class="form-control" type="text" name= "{{ player }}__maiden" value="{{ values.maiden }}"</td>
+                                            <td><input style="width: 50px" class="form-control" type="text" name= "{{ player }}__wickets" value="{{ values.wickets }}"</td>
+                                            <td><input style="width: 50px" class="form-control" type="text" name= "{{ player }}__CROST" value="{{ values.CROST }}"</td>
+                                            <td><input style="width: 50px" class="form-control" type="text" name= "{{ player }}__extras" value="{{ values.extras }}"</td>
+                                            <td><strong><input style="width: 50px" class="form-control" type="text" name= "{{ player }}__points" value="{{ values.points }}"</strong></td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </table>
+                        <button class="btn btn-success" name="edit_match" value="{{ match.match_name }}">Save match</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <br><br>
+
+    {% endfor %}
+    </div>
+    <form class="form-inline" action="" method="post">{% csrf_token %}
+        <button class="btn btn-success" type="submit" name="update_points" value="True">Update Points</button>
+    </form>
+
+
+{% endblock %}

@@ -3,16 +3,8 @@
 
 
 {% block body %}
-    {% if error %}
-        <div class="alert alert-danger alert-dismissible" role="alert">
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <strong>Error!</strong> {{ error }}
-        </div>
-    {% endif %}
-    <form class="form-inline" action="" method="post">{% csrf_token %}
-        Add a new match <input type="url" name="url" class="form-control">
-        <button class="btn btn-default" type="submit" name="add_match" value="True">Add match</button>
-    </form>
+
+
     <br><br>
     <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
     {% for match in matches.match %}
@@ -88,9 +80,7 @@
 
     {% endfor %}
     </div>
-    <form class="form-inline" action="" method="post">{% csrf_token %}
-        <button class="btn btn-success" type="submit" name="update_points" value="True">Update Points</button>
-    </form>
+
 
 
 {% endblock %}

@@ -21,7 +21,7 @@ class Player(models.Model):
   )
   Nationality = models.CharField(max_length=2,choices=NATIONALITY_CHOICES,default='IN')
   Team_name = models.CharField(max_length=3,default="NUL")
-  Is_playing = models.BooleanField(default=False)
+  Is_playing = models.BooleanField(default=True)
   Is_captain = models.BooleanField(default=False)
   Points = models.PositiveIntegerField(default=0)
 

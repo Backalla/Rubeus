@@ -4,4 +4,75 @@
 
 {% block body %}
     <h2>This is teams page</h2>
+    <form action="" method="post">{% csrf_token %}
+        <button class="btn btn-success" name="update_points" value="True">Update Points</button>
+    </form>
+    <br><br>
+    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+        {% for owner in all_owners %}
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="heading{{ forloop.counter }}">
+                    <h4 class="panel-title">
+                    <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
+                        {{ owner.Name }} - {{ owner.Points }} points
+                    </a>
+                    </h4>
+                </div>
+                <div id="collapse{{ forloop.counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ forloop.counter }}">
+                    <div class="panel-body">
+                        <div class="panel-group" id="accordion{{ owner }}" role="tablist" aria-multiselectable="true">
+                            {% for player in all_players %}
+                                {% if player.Team_name == owner.Team_name %}
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading" role="tab" id="heading{{ player.Pid }}">
+                                          <h4 class="panel-title">
+                                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion{{ owner }}" href="#collapse{{ player.Pid }}" aria-expanded="false" aria-controls="collapse{{ player.Pid }}">
+                                              {{ player.Name }} - {{ player.Points }} points
+                                            </a>
+                                          </h4>
+                                        </div>
+                                        <div id="collapse{{ player.Pid }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ player.Pid }}">
+                                            <div class="panel-body">
+                                            <table class="table table-hover">
+                                                <tr>
+                                                    <th>Match</th>
+                                                    <th>Runs Scored</th>
+                                                    <th>Maidens</th>
+                                                    <th>Wickets</th>
+                                                    <th>Runs Given</th>
+                                                    <th>Catch/Run out/Stumping</th>
+                                                    <th>Others</th>
+                                                    <th><strong>Points</strong></th>
+                                                </tr>
+                                                {% for match in matches.match %}
+                                                    {% if player.Pid in match.players %}
+                                                        {% for pid,info in match.players.items %}
+                                                            {% if pid == player.Pid %}
+                                                            <tr>
+                                                                <td>{{ match.match_name }}</td>
+                                                                <td>{{ info.runs_scored }}</td>
+                                                                <td>{{ info.maiden }}</td>
+                                                                <td>{{ info.wickets }}</td>
+                                                                <td>{{ info.runs_given }}</td>
+                                                                <td>{{ info.CROST }}</td>
+                                                                <td>{{ info.extras }}</td>
+                                                                <td><strong>{{ info.points }}</strong></td>
+                                                            </tr>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
 {% endblock %}

@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from pprint import pprint
+import operator
 
 from django.shortcuts import render
 from django.template import loader
@@ -311,10 +312,55 @@ def resetdb(request):
 
 
 def teams(request):
-  context={}
+  with open(os.path.join(BASE, "matches.json"), "r") as f:
+    matches = json.load(f)
+
+  if request.method == 'POST':
+    if 'update_points' in request.POST:
+      all_players = Player.objects.all()
+      all_players.update(Points=0)
+      all_owners = Owner.objects.all()
+      all_owners.update(Points=0)
+
+      for match in matches['match']:
+        for player in match['players']:
+          for p in all_players:
+            if player == p.Pid:
+              p.Points += int(match['players'][player]['points'])
+              p.save()
+              team = Owner.objects.get(Team_name=p.Team_name)
+              team.Points += int(match['players'][player]['points'])
+              team.save()
+
+  all_players = Player.objects.all()
+  all_owners = Owner.objects.all()
+  all_owners = sorted(all_owners,key=operator.attrgetter('Points'),reverse=True)
+
+  context = {
+    'all_players': all_players,
+    'all_owners' : all_owners,
+    'matches' : matches,
+  }
   return render(request,'home/teams.html',context)
 
 def matches(request):
+  context={}
+  all_players = Player.objects.all()
+  all_owners = Owner.objects.all()
+  with open(os.path.join(BASE, "matches.json"), "r") as f:
+    matches = json.load(f)
+
+
+  context={
+    "matches":matches,
+    "all_players":all_players,
+    "all_owners":all_owners,
+  }
+  return render(request,'home/matches.html',context)
+
+
+
+def editmatches(request):
   context={}
   error = None
   if request.method == "POST":
@@ -325,6 +371,23 @@ def matches(request):
         get_match(url)
       except:
         error = "No scorecard found.."
+    if 'edit_match' in request.POST:
+      new_info = {}
+      for info in request.POST:
+        if '__' in info:
+          new_info[tuple(str(info).split('__'))] = str(request.POST[info])
+      with open(os.path.join(BASE, "matches.json"), "r") as f:
+        matches = json.load(f)
+      match_name = request.POST['edit_match']
+      for match in matches['match']:
+        if match['match_name'] == match_name:
+          for pid,attr in new_info:
+            match['players'][pid][attr] = new_info[(pid,attr)]
+
+
+      with open(os.path.join(BASE, "matches.json"), 'w') as f:
+        json.dump(matches, f)
+
     if 'update_points' in request.POST and request.POST['update_points'] == "True":
       with open(os.path.join(BASE, "matches.json"), "r") as f:
         matches = json.load(f)
@@ -387,7 +450,7 @@ def matches(request):
     "all_owners":all_owners,
     "error":error,
   }
-  return render(request,'home/matches.html',context)
+  return render(request,'home/editmatches.html',context)
 
 def auction(request):
   prev = None
