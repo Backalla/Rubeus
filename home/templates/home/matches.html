@@ -41,7 +41,9 @@
                         <th><strong>Points</strong></th>
                     </tr>
                     {% for player,values in match.players.items %}
-                        <tr>
+                        <tr {% if values.pid == '-1' %}
+                            class="warning"
+                        {% endif %}>
                             <td>{{ forloop.counter }}</td>
                             <td>{{ player }}</td>
                             <td>{% for p in all_players %}
@@ -51,7 +53,7 @@
                             {% endfor %}
                             </td>
                             <td>{% for p in all_players %}
-                                {% if p.Pid == values.pid %}
+                                {% if p.Pid == player %}
                                     {% for owner in all_owners %}
                                         {% if p.Team_name == owner.Team_name %}
                                             {{ owner.Name }}

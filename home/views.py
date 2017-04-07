@@ -13,7 +13,7 @@ import os.path
 BASE = os.path.dirname(os.path.abspath(__file__))
 
 def get_match(url):
-  player_template = {"pid":"0","name":"","team_name":"","out_by":"None","runs_scored":"0","balls_faced":"0","fours":"0","sixes":"0","strike_rate":"0","overs":"0","maiden":"0","runs_given":"0","wickets":"0","no_balls":"0","wide_balls":"0","CROST":"0","extras":"0","points":"0"}
+  player_template = {"pid":"0","name":"","is_captain":"0","team_name":"","out_by":"None","runs_scored":"0","balls_faced":"0","fours":"0","sixes":"0","strike_rate":"0","overs":"0","maiden":"0","runs_given":"0","wickets":"0","no_balls":"0","wide_balls":"0","CROST":"0","extras":"0","points":"0"}
   with open(os.path.join(BASE, "matches.json"),"r") as f:
     matches = json.load(f)
   # matches = {"match": []}
@@ -222,6 +222,7 @@ def get_match(url):
     players[pid] = player
 
 
+
   # print players
   for p in Inning1_batting_info:
     if p['pid'] in players:
@@ -232,7 +233,13 @@ def get_match(url):
       players[p['pid']]['runs_scored'] = p['runs']
       players[p['pid']]['out_by'] = p['out_by']
       players[p['pid']]['strike_rate'] = p['sr']
-      players[p['pid']]['pid'] = p['pid']
+      if Player.objects.filter(Pid=p['pid']).count()==1 and Player.objects.get(Pid=p['pid']).Is_playing:
+        players[p['pid']]['pid'] = p['pid']
+      else:
+        players[p['pid']]['pid'] = '-1'
+      if Player.objects.filter(Pid=p['pid']).count()==1 and Player.objects.get(Pid=p['pid']).Is_captain:
+        players[p['pid']]['is_captain'] = "1"
+
 
 
   for p in Inning1_bowling_info:
@@ -244,7 +251,12 @@ def get_match(url):
       players[p['pid']]['runs_given'] = p['runs_given']
       players[p['pid']]['wickets'] = p['wickets']
       players[p['pid']]['wide_balls'] = p['wide_balls']
-      players[p['pid']]['pid'] = p['pid']
+      if Player.objects.filter(Pid=p['pid']).count()==1 and Player.objects.get(Pid=p['pid']).Is_playing:
+        players[p['pid']]['pid'] = p['pid']
+      else:
+        players[p['pid']]['pid'] = '-1'
+      if Player.objects.filter(Pid=p['pid']).count()==1 and Player.objects.get(Pid=p['pid']).Is_captain:
+        players[p['pid']]['is_captain'] = "1"
 
 
   for p in Inning2_batting_info:
@@ -256,7 +268,12 @@ def get_match(url):
       players[p['pid']]['runs_scored'] = p['runs']
       players[p['pid']]['out_by'] = p['out_by']
       players[p['pid']]['strike_rate'] = p['sr']
-      players[p['pid']]['pid'] = p['pid']
+      if Player.objects.filter(Pid=p['pid']).count()==1 and Player.objects.get(Pid=p['pid']).Is_playing:
+        players[p['pid']]['pid'] = p['pid']
+      else:
+        players[p['pid']]['pid'] = '-1'
+      if Player.objects.filter(Pid=p['pid']).count()==1 and Player.objects.get(Pid=p['pid']).Is_captain:
+        players[p['pid']]['is_captain'] = "1"
 
 
   for p in Inning2_bowling_info:
@@ -268,8 +285,12 @@ def get_match(url):
       players[p['pid']]['runs_given'] = p['runs_given']
       players[p['pid']]['wickets'] = p['wickets']
       players[p['pid']]['wide_balls'] = p['wide_balls']
-      players[p['pid']]['pid'] = p['pid']
-
+      if Player.objects.filter(Pid=p['pid']).count()==1 and Player.objects.get(Pid=p['pid']).Is_playing:
+        players[p['pid']]['pid'] = p['pid']
+      else:
+        players[p['pid']]['pid'] = '-1'
+      if Player.objects.filter(Pid=p['pid']).count()==1 and Player.objects.get(Pid=p['pid']).Is_captain:
+        players[p['pid']]['is_captain'] = "1"
 
 
 
@@ -317,12 +338,34 @@ def teams(request):
 
   if request.method == 'POST':
     if 'update_points' in request.POST:
+      team_name_map = {'Sunrisers Hyderabad': 'SRH',
+                        'Royal Challengers Bangalore': 'RCB' ,
+                        'Rising Pune Supergiant': 'RPS' ,
+                        'Mumbai Indians': 'MIN' ,
+                        'Kolkata Knight Riders': 'KKR' ,
+                        'Kings XI Punjab': 'KXP' ,
+                        'Gujarat Lions': 'GJL' ,
+                        'Delhi Daredevils': 'DDD' }
       all_players = Player.objects.all()
       all_players.update(Points=0)
       all_owners = Owner.objects.all()
       all_owners.update(Points=0)
 
       for match in matches['match']:
+        if int(match['team1_score'])> int(match['team2_score']):
+          winner_team = str(match['team1_name'])
+          loser_team = str(match['team2_name'])
+        else:
+          winner_team = str(match['team2_name'])
+          loser_team = str(match['team1_name'])
+        winner_team_obj = Owner.objects.get(Team_name=team_name_map[winner_team])
+        winner_team_obj.Points += 100
+        winner_team_obj.save()
+
+        loser_team_obj = Owner.objects.get(Team_name=team_name_map[loser_team])
+        loser_team_obj.Points -= 50
+        loser_team_obj.save()
+
         for player in match['players']:
           for p in all_players:
             if player == p.Pid:
@@ -369,7 +412,8 @@ def editmatches(request):
       url = str(request.POST['url'])
       try:
         get_match(url)
-      except:
+      except Exception as e:
+        print e
         error = "No scorecard found.."
     if 'edit_match' in request.POST:
       new_info = {}
@@ -394,43 +438,50 @@ def editmatches(request):
       for match in matches['match']:
         for pid in match['players']:
           player = match['players'][pid]
-          points = 0
-          # print player['name'],
-          # 1run = 1 point
-          points += int(player['runs_scored'])
 
-          # 75 to 99 = 50 bonus points
-          if int(player['runs_scored']) >= 75 and int(player['runs_scored']) < 100:
-            points+= 50
 
-          # >= 100 runs = points boubled
-          if int(player['runs_scored']) >= 100:
+          if int(player['pid']) == -1:
+            points = 0
+          else:
+            points = 0
+            # print player['name'],
+            # 1run = 1 point
             points += int(player['runs_scored'])
 
-          # 1 wicket = 30 points
-          points += 30*int(player['wickets'])
+            # 75 to 99 = 50 bonus points
+            if int(player['runs_scored']) >= 75 and int(player['runs_scored']) < 100:
+              points+= 50
 
-          # 1 CROST = 50 points
-          points += 50*int(player['CROST'])
+            # >= 100 runs = points boubled
+            if int(player['runs_scored']) >= 100:
+              points += int(player['runs_scored'])
 
-          # 1 maiden over = 50 points
-          points += 50*int(player['maiden'])
+            # 1 wicket = 30 points
+            points += 30*int(player['wickets'])
 
-          # 3+ wickets = 100 points
-          if int(player['wickets']) > 3:
-            points += 100
+            # 1 CROST = 15 points
+            points += 15*int(player['CROST'])
 
-          # hattrick, 6 fours and 6 sixes
-          points += int(player['extras'])
+            # 1 maiden over = 50 points
+            points += 50*int(player['maiden'])
 
-          # -20 for duck
-          if player['out_by'] != 'None' and player['runs_scored'] == '0':
-            points -= 20
+            # 3+ wickets = 100 points
+            if int(player['wickets']) > 3:
+              points += 100
 
-          # -20 if runs given > 40
-          if int(player['runs_given']) > 40:
-            points -= 20
+            # hattrick, 6 fours and 6 sixes
+            points += int(player['extras'])
 
+            # -20 for duck
+            if player['out_by'] != 'None' and player['runs_scored'] == '0':
+              points -= 20
+
+            # -20 if runs given > 40
+            if int(player['runs_given']) > 40:
+              points -= 20
+
+            if int(player['is_captain']) == 1:
+              points *= 2
           player['points'] = str(points)
       with open(os.path.join(BASE, "matches.json"), 'w') as f:
         json.dump(matches, f)

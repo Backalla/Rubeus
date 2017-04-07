@@ -27,7 +27,7 @@
                                         <div class="panel-heading" role="tab" id="heading{{ player.Pid }}">
                                           <h4 class="panel-title">
                                             <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion{{ owner }}" href="#collapse{{ player.Pid }}" aria-expanded="false" aria-controls="collapse{{ player.Pid }}">
-                                              {{ player.Name }} - {{ player.Points }} points
+                                              {{ player.Name }}{% if player.Is_captain %}(c){% endif %} - {{ player.Points }} points
                                             </a>
                                           </h4>
                                         </div>
@@ -48,7 +48,9 @@
                                                     {% if player.Pid in match.players %}
                                                         {% for pid,info in match.players.items %}
                                                             {% if pid == player.Pid %}
-                                                            <tr>
+                                                            <tr {% if info.pid == '-1' %}
+                                                                class="warning"
+                                                            {% endif %}>
                                                                 <td>{{ match.match_name }}</td>
                                                                 <td>{{ info.runs_scored }}</td>
                                                                 <td>{{ info.maiden }}</td>
